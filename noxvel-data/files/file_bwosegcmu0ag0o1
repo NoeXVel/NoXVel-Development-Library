@@ -1,0 +1,23 @@
+using UnityEngine
+
+public class InimigoPai : MonoBehaviour
+{
+	// Por que achei tão interessante?
+	// Por que podemos usar um dos tipos de acessos que não tinha tanta utilidade até então
+	// que é o protected, vamos ver um exemplo?
+	
+	protected int vida = 3f; // Aqui é a vida, e cada inimigo filho herda do pai, mas com um campo para um valor novo se eu quiser que eles tenham vidas diferentes
+	protected string meuNome = "papai"; // Esse é o nome do pai, mas TODOS os filhos que herdam dessa classe, possuem um campo novo aberto para o próprio nome agora
+	protected GameObject explosao; // TODOS os filhos herdam esse GameObject quando morrem
+	
+	public void TomarDano(int dano)
+	{
+		vida -= dano
+		
+		if (vida <= 0)
+		{
+			Destroy(gameObject);
+			Instantiate(explosao, transform.position, Quaternion.identity);
+		}
+	}
+}
