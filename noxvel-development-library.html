@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoXVel Development Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --bg:#0F1218;
+  --bg-elevated:#141924;
+  --surface:#1A2029;
+  --surface-hover:#212836;
+  --border:#2A3140;
+  --border-strong:#3A4356;
+  --text:#E7E9EE;
+  --text-dim:#9BA3B0;
+  --text-faint:#5E6675;
+  --brand:#6C6FF0;
+  --brand-soft:rgba(108,111,240,0.14);
+  --brand-strong:#8688F5;
+  --st-dev:#F2B94D;
+  --st-completed:#4FD1C5;
+  --st-ideas:#B794F6;
+  --st-canceled:#F2555A;
+  --st-archived:#7C8598;
+  --radius-s:5px;
+  --radius-m:9px;
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'IBM Plex Sans',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--brand-soft);color:var(--text);}
+a{color:inherit;}
+button{font-family:inherit;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;}
+
+/* ---------- shell ---------- */
+#app{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+.sidebar{
+  background:var(--bg-elevated);
+  border-right:1px solid var(--border);
+  padding:20px 14px;
+  display:flex;flex-direction:column;gap:22px;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{
+  font-family:var(--font-display);font-weight:700;font-size:17px;letter-spacing:.2px;
+  padding:0 6px;color:var(--text);
+}
+.brand small{display:block;font-family:var(--font-mono);font-size:10px;color:var(--text-faint);font-weight:400;margin-top:3px;letter-spacing:.5px;}
+.nav-group{display:flex;flex-direction:column;gap:2px;}
+.nav-label{font-size:10.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;padding:10px 10px 4px;}
+.nav-item{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-s);
+  color:var(--text-dim);cursor:pointer;font-size:13.5px;border:1px solid transparent;
+}
+.nav-item:hover{background:var(--surface-hover);color:var(--text);}
+.nav-item.active{background:var(--brand-soft);color:var(--brand-strong);border-color:rgba(108,111,240,0.3);}
+.nav-dot{width:7px;height:7px;border-radius:50%;flex:none;}
+.sidebar-foot{margin-top:auto;font-size:11px;color:var(--text-faint);padding:8px 10px;border-top:1px solid var(--border);}
+.link-reset{cursor:pointer;color:var(--text-faint);text-decoration:underline;text-underline-offset:2px;}
+.link-reset:hover{color:var(--st-canceled);}
+
+.main{min-width:0;}
+.topbar{
+  position:sticky;top:0;z-index:20;background:rgba(15,18,24,0.9);backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--border);padding:12px 26px;display:flex;gap:14px;align-items:center;
+}
+.search-wrap{position:relative;flex:1;max-width:640px;}
+.search-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);
+  padding:9px 14px 9px 36px;border-radius:var(--radius-m);font-size:13.5px;outline:none;
+}
+.search-input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft);}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:14px;}
+.topbar-actions{display:flex;gap:8px;margin-left:auto;}
+
+.content{padding:26px;max-width:1280px;}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;gap:16px;flex-wrap:wrap;}
+.page-title{font-family:var(--font-display);font-size:22px;font-weight:600;margin:0;}
+.page-sub{color:var(--text-dim);font-size:13px;margin-top:4px;}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-s);
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--text);
+  font-size:13px;cursor:pointer;white-space:nowrap;
+}
+.btn:hover{background:var(--surface-hover);}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:500;}
+.btn-primary:hover{background:var(--brand-strong);}
+.btn-danger{border-color:rgba(242,85,90,0.4);color:var(--st-canceled);}
+.btn-danger:hover{background:rgba(242,85,90,0.1);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-icon{padding:7px 9px;}
+
+/* ---------- stats ---------- */
+.stat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:26px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:14px 14px;}
+.stat-num{font-family:var(--font-display);font-size:24px;font-weight:600;}
+.stat-label{font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+.stat-card[data-k="dev"] .stat-num{color:var(--st-dev);}
+.stat-card[data-k="completed"] .stat-num{color:var(--st-completed);}
+.stat-card[data-k="ideas"] .stat-num{color:var(--st-ideas);}
+.stat-card[data-k="canceled"] .stat-num{color:var(--st-canceled);}
+.stat-card[data-k="archived"] .stat-num{color:var(--st-archived);}
+
+.section-title{font-family:var(--font-display);font-size:14.5px;font-weight:600;margin:26px 0 12px;display:flex;align-items:center;justify-content:space-between;}
+
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{
+  padding:7px 13px;border-radius:20px;background:var(--surface);border:1px solid var(--border);
+  font-size:12.5px;color:var(--text-dim);cursor:pointer;
+}
+.chip:hover{border-color:var(--border-strong);color:var(--text);}
+.chip.active{background:var(--brand-soft);border-color:var(--brand);color:var(--brand-strong);}
+
+/* ---------- cards / grid ---------- */
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px;}
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);
+  overflow:hidden;cursor:pointer;display:flex;flex-direction:column;transition:border-color .12s;
+}
+.card:hover{border-color:var(--border-strong);}
+.card-thumb{height:110px;background:linear-gradient(135deg,#1c2230,#161b26);display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;position:relative;}
+.card-thumb img{width:100%;height:100%;object-fit:cover;}
+.status-bar{position:absolute;top:0;left:0;right:0;height:3px;}
+.card-body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1;}
+.card-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.card-title{font-weight:600;font-size:14.5px;}
+.card-desc{color:var(--text-dim);font-size:12.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.meta-row{display:flex;gap:6px;flex-wrap:wrap;font-size:11px;color:var(--text-faint);font-family:var(--font-mono);}
+.meta-row span{background:var(--bg-elevated);padding:2px 7px;border-radius:4px;border:1px solid var(--border);}
+.tag-row{display:flex;gap:5px;flex-wrap:wrap;}
+.tag{font-size:11px;color:var(--brand-strong);background:var(--brand-soft);padding:2px 8px;border-radius:10px;}
+.card-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--text-faint);margin-top:auto;padding-top:6px;border-top:1px solid var(--border);}
+
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:3px 9px;border-radius:20px;font-weight:500;}
+.badge .nav-dot{width:6px;height:6px;}
+.badge[data-status="dev"]{color:var(--st-dev);background:rgba(242,185,77,0.12);}
+.badge[data-status="completed"]{color:var(--st-completed);background:rgba(79,209,197,0.12);}
+.badge[data-status="ideas"]{color:var(--st-ideas);background:rgba(183,148,246,0.12);}
+.badge[data-status="canceled"]{color:var(--st-canceled);background:rgba(242,85,90,0.12);}
+.badge[data-status="archived"]{color:var(--st-archived);background:rgba(124,133,152,0.12);}
+
+.empty{padding:50px 20px;text-align:center;color:var(--text-faint);border:1px dashed var(--border);border-radius:var(--radius-m);}
+.empty b{color:var(--text-dim);display:block;margin-bottom:4px;font-size:14px;}
+
+/* ---------- filters ---------- */
+.layout-filters{display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:start;}
+.filter-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:16px;position:sticky;top:80px;}
+.filter-group{margin-bottom:16px;}
+.filter-group h4{margin:0 0 8px;font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;}
+.filter-opt{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12.5px;color:var(--text-dim);cursor:pointer;}
+.filter-opt:hover{color:var(--text);}
+.filter-opt input{accent-color:var(--brand);}
+.filter-clear{font-size:12px;color:var(--brand-strong);cursor:pointer;margin-bottom:10px;display:inline-block;}
+
+/* ---------- item detail ---------- */
+.item-head{display:flex;gap:18px;align-items:flex-start;margin-bottom:8px;}
+.item-thumb-lg{width:110px;height:74px;border-radius:var(--radius-m);background:linear-gradient(135deg,#1c2230,#161b26);flex:none;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text-faint);font-size:11px;}
+.item-thumb-lg img{width:100%;height:100%;object-fit:cover;}
+.item-title{font-family:var(--font-display);font-size:23px;font-weight:600;margin:0 0 4px;}
+.item-meta-line{color:var(--text-dim);font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.dot-sep{width:3px;height:3px;border-radius:50%;background:var(--text-faint);}
+.item-desc{color:var(--text-dim);font-size:13.5px;margin:12px 0;max-width:760px;}
+.item-actions{display:flex;gap:8px;margin-left:auto;}
+
+.tabbar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:20px 0 18px;}
+.tab{padding:9px 4px;margin-right:18px;font-size:13.5px;color:var(--text-dim);cursor:pointer;border-bottom:2px solid transparent;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--text);border-color:var(--brand);}
+
+.breadcrumb{font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;}
+.breadcrumb span{cursor:pointer;}
+.breadcrumb span:hover{color:var(--brand-strong);}
+.breadcrumb .sep{color:var(--text-faint);cursor:default;}
+
+.file-toolbar{display:flex;gap:8px;margin-bottom:14px;}
+.table{width:100%;border-collapse:collapse;}
+.table th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);padding:6px 10px;border-bottom:1px solid var(--border);font-weight:500;}
+.table td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+.table tr:hover td{background:var(--surface-hover);}
+.row-name{display:flex;align-items:center;gap:9px;cursor:pointer;}
+.row-ic{font-size:15px;flex:none;}
+.row-actions{display:flex;gap:6px;justify-content:flex-end;opacity:0;}
+.table tr:hover .row-actions{opacity:1;}
+.mono{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);}
+
+.release-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-m);padding:14px 16px;margin-bottom:10px;cursor:pointer;}
+.release-item:hover{border-color:var(--border-strong);}
+.release-top{display:flex;justify-content:space-between;align-items:center;}
+.release-ver{font-family:var(--font-mono);font-weight:500;color:var(--brand-strong);font-size:14px;}
+.release-date{font-size:11.5px;color:var(--text-faint);}
+.release-name{font-size:13px;margin-top:3px;}
+.release-files-count{font-size:11.5px;color:var(--text-faint);margin-top:6px;}
+
+/* ---------- modal ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(6,8,12,0.65);backdrop-filter:blur(2px);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:100;overflow-y:auto;}
+.modal{background:var(--bg-elevated);border:1px solid var(--border-strong);border-radius:var(--radius-m);width:100%;max-width:560px;padding:22px;}
+.modal h3{font-family:var(--font-display);margin:0 0 16px;font-size:17px;}
+.form-row{margin-bottom:13px;}
+.form-row label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:5px;}
+.form-row input[type=text],.form-row input[type=date],.form-row textarea,.form-row select{
+  width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);
+  padding:8px 10px;border-radius:var(--radius-s);font-size:13px;font-family:inherit;outline:none;
+}
+.form-row input:focus,.form-row textarea:focus,.form-row select:focus{border-color:var(--brand);}
+.form-row textarea{resize:vertical;min-height:60px;}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
+.tag-input-box{display:flex;flex-wrap:wrap;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);padding:7px;}
+.tag-input-box input{border:none;background:transparent;outline:none;color:var(--text);flex:1;min-width:80px;font-size:13px;}
+.tag-x{cursor:pointer;margin-left:5px;color:var(--text-faint);}
+.file-pick-list{max-height:230px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-s);}
+.file-pick-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-bottom:1px solid var(--border);font-size:12.5px;}
+.file-pick-row:last-child{border-bottom:none;}
+.upload-progress{font-size:11.5px;color:var(--text-dim);margin-top:8px;}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border-strong);padding:11px 16px;border-radius:var(--radius-s);font-size:13px;z-index:200;box-shadow:0 6px 20px rgba(0,0,0,.4);}
+
+@media (max-width:900px){
+  #app{grid-template-columns:1fr;}
+  .sidebar{position:fixed;left:-240px;width:220px;transition:left .15s;z-index:50;}
+  .sidebar.open{left:0;}
+  .stat-grid{grid-template-columns:repeat(3,1fr);}
+  .layout-filters{grid-template-columns:1fr;}
+  .filter-panel{position:static;}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+/* =========================================================================
+   NoXVel Development Library
+   Modules (kept in one file because the artifact platform renders a single
+   HTML file, but logically separated below):
+     - Utils        generic helpers
+     - FileDB       IndexedDB layer for actual file bytes (binary storage)
+     - Store        app data (projects/systems/ideas + folders + file meta)
+                     persisted through window.storage (key/value, JSON only)
+     - Render       view/template functions (Home, Library, Item, modals)
+     - App          controller: routing + event handlers, exposed on window
+   ========================================================================= */
+
+/* ---------------------------- Utils ---------------------------- */
+const Utils = {
+  uid(prefix){ return (prefix||'id')+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36); },
+  esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+  formatBytes(b){
+    if(!b && b!==0) return '—';
+    if(b<1024) return b+' B';
+    const u=['KB','MB','GB','TB']; let i=-1;
+    do{ b/=1024; i++; }while(b>=1024 && i<u.length-1);
+    return b.toFixed(b<10?2:1)+' '+u[i];
+  },
+  formatDate(iso){
+    if(!iso) return '—';
+    const d = new Date(iso);
+    if(isNaN(d)) return iso;
+    return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  },
+  timeAgo(iso){
+    if(!iso) return '—';
+    const s = (Date.now()-new Date(iso).getTime())/1000;
+    if(s<60) return 'agora há pouco';
+    if(s<3600) return Math.floor(s/60)+' min atrás';
+    if(s<86400) return Math.floor(s/3600)+'h atrás';
+    if(s<86400*30) return Math.floor(s/86400)+'d atrás';
+    return Utils.formatDate(iso);
+  },
+  debounce(fn,ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),ms); }; },
+  download(blob,name){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  },
+  toast(msg){
+    const el = document.createElement('div');
+    el.className='toast'; el.textContent=msg;
+    document.getElementById('toast-root').appendChild(el);
+    setTimeout(()=>el.remove(),2600);
+  }
+};
+
+/* ---------------------------- FileDB (IndexedDB) ---------------------------- */
+const FileDB = (()=>{
+  let dbp = null;
+  function open(){
+    if(dbp) return dbp;
+    dbp = new Promise((resolve,reject)=>{
+      const req = indexedDB.open('noxvel-files-db', 1);
+      req.onupgradeneeded = e=>{
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains('blobs')) db.createObjectStore('blobs');
+      };
+      req.onsuccess = e=>resolve(e.target.result);
+      req.onerror = e=>reject(e.target.error);
+    });
+    return dbp;
+  }
+  async function put(key, blob){
+    const db = await open();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').put(blob, key);
+      tx.oncomplete = ()=>res(true);
+      tx.onerror = ()=>rej(tx.error);
+    });
+  }
+  async function get(key){
+    const db = await open();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('blobs','readonly');
+      const r = tx.objectStore('blobs').get(key);
+      r.onsuccess = ()=>res(r.result || null);
+      r.onerror = ()=>rej(r.error);
+    });
+  }
+  async function del(key){
+    const db = await open();
+    return new Promise((res,rej)=>{
+      const tx = db.transaction('blobs','readwrite');
+      tx.objectStore('blobs').delete(key);
+      tx.oncomplete = ()=>res(true);
+      tx.onerror = ()=>rej(tx.error);
+    });
+  }
+  return { put, get, del };
+})();
+
+/* ---------------------------- Store ---------------------------- */
+const Store = {
+  STORAGE_KEY: 'noxvel-library-state-v1',
+  state: { items: [], folders: [], files: [] },
+  loaded: false,
+
+  async load(){
+    try{
+      const r = await window.storage.get(this.STORAGE_KEY, false);
+      if(r && r.value){
+        const parsed = JSON.parse(r.value);
+        this.state = Object.assign({items:[],folders:[],files:[]}, parsed);
+      }
+    }catch(e){ /* first run: nothing stored yet */ }
+    this.loaded = true;
+  },
+
+  _saveTimer: null,
+  save(){
+    clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(async ()=>{
+      try{
+        await window.storage.set(this.STORAGE_KEY, JSON.stringify(this.state), false);
+      }catch(e){ console.error('Falha ao salvar biblioteca', e); Utils.toast('Não foi possível salvar (armazenamento).'); }
+    }, 250);
+  },
+
+  async resetAll(){
+    for(const f of this.state.files){ try{ await FileDB.del(f.id); }catch(e){} }
+    for(const it of this.state.items){ try{ await FileDB.del('thumb:'+it.id); }catch(e){} }
+    this.state = { items: [], folders: [], files: [] };
+    await this.save();
+  },
+
+  // ---- items ----
+  getItem(id){ return this.state.items.find(i=>i.id===id); },
+  addItem(data){
+    const now = new Date().toISOString();
+    const item = Object.assign({
+      id: Utils.uid('item'),
+      name:'', description:'', category:'Project', status:'dev',
+      engine:'Unity', dimension:'2D', genre:[], tags:[], technologies:[], systems:[],
+      version:'', notes:'', hasThumbnail:false,
+      createdAt: now, updatedAt: now, releases: []
+    }, data);
+    this.state.items.push(item);
+    this.save();
+    return item;
+  },
+  updateItem(id, patch){
+    const it = this.getItem(id);
+    if(!it) return;
+    Object.assign(it, patch, { updatedAt: new Date().toISOString() });
+    this.save();
+  },
+  async deleteItem(id){
+    const files = this.state.files.filter(f=>f.itemId===id);
+    for(const f of files) await FileDB.del(f.id);
+    await FileDB.del('thumb:'+id);
+    this.state.files = this.state.files.filter(f=>f.itemId!==id);
+    this.state.folders = this.state.folders.filter(f=>f.itemId!==id);
+    this.state.items = this.state.items.filter(i=>i.id!==id);
+    this.save();
+  },
+
+  // ---- folders ----
+  getFolders(itemId, parentId){ return this.state.folders.filter(f=>f.itemId===itemId && (f.parentId||null)===(parentId||null)); },
+  getFolder(id){ return this.state.folders.find(f=>f.id===id); },
+  addFolder(itemId, parentId, name){
+    const f = { id: Utils.uid('fold'), itemId, parentId: parentId||null, name, createdAt: new Date().toISOString() };
+    this.state.folders.push(f);
+    this.updateItem(itemId, {});
+    this.save();
+    return f;
+  },
+  renameFolder(id, name){ const f=this.getFolder(id); if(f){ f.name=name; this.save(); } },
+  async deleteFolder(id){
+    const f = this.getFolder(id); if(!f) return;
+    const toDeleteFolders = [id];
+    let changed = true;
+    while(changed){
+      changed = false;
+      for(const sub of this.state.folders){
+        if(toDeleteFolders.includes(sub.parentId) && !toDeleteFolders.includes(sub.id)){ toDeleteFolders.push(sub.id); changed = true; }
+      }
+    }
+    const filesToDelete = this.state.files.filter(fl=>toDeleteFolders.includes(fl.folderId));
+    for(const fl of filesToDelete) await FileDB.del(fl.id);
+    this.state.files = this.state.files.filter(fl=>!toDeleteFolders.includes(fl.folderId));
+    this.state.folders = this.state.folders.filter(fo=>!toDeleteFolders.includes(fo.id));
+    this.save();
+  },
+  folderPath(id){
+    const path = [];
+    let cur = this.getFolder(id);
+    while(cur){ path.unshift(cur); cur = cur.parentId ? this.getFolder(cur.parentId) : null; }
+    return path;
+  },
+
+  // ---- files (metadata; bytes live in FileDB) ----
+  getFiles(itemId, folderId){ return this.state.files.filter(f=>f.itemId===itemId && (f.folderId||null)===(folderId||null)); },
+  getFile(id){ return this.state.files.find(f=>f.id===id); },
+  getAllFiles(itemId){ return this.state.files.filter(f=>f.itemId===itemId); },
+  addFileMeta(meta){ this.state.files.push(meta); this.updateItem(meta.itemId,{}); this.save(); },
+  renameFile(id, name){ const f=this.getFile(id); if(f){ f.name=name; this.save(); } },
+  async deleteFile(id){
+    await FileDB.del(id);
+    this.state.files = this.state.files.filter(f=>f.id!==id);
+    this.save();
+  },
+
+  // ---- releases ----
+  addRelease(itemId, release){
+    const it = this.getItem(itemId); if(!it) return;
+    release.id = Utils.uid('rel');
+    it.releases = it.releases || [];
+    it.releases.unshift(release);
+    it.updatedAt = new Date().toISOString();
+    this.save();
+    return release;
+  },
+  getRelease(itemId, relId){
+    const it = this.getItem(itemId); if(!it) return null;
+    return (it.releases||[]).find(r=>r.id===relId);
+  },
+
+  // ---- facets / stats ----
+  facetValues(field){
+    const set = new Set();
+    for(const it of this.state.items){
+      const v = it[field];
+      if(Array.isArray(v)) v.forEach(x=>x && set.add(x));
+      else if(v) set.add(v);
+    }
+    return Array.from(set).sort();
+  }
+};
+
+/* ---------------------------- constants ---------------------------- */
+const STATUSES = [
+  {k:'dev', label:'In Development', dot:'var(--st-dev)'},
+  {k:'completed', label:'Completed', dot:'var(--st-completed)'},
+  {k:'ideas', label:'Ideas', dot:'var(--st-ideas)'},
+  {k:'canceled', label:'Canceled', dot:'var(--st-canceled)'},
+  {k:'archived', label:'Archived', dot:'var(--st-archived)'},
+];
+const CATEGORIES = ['Project','Dev Kit','System','Template','Study','Prototype','Experiment','Backup','Idea','Archive'];
+const ENGINES = ['Unity','GameMaker','Godot','Unreal','Blender','Other'];
+const DIMENSIONS = ['2D','3D','2.5D','Other'];
+function statusMeta(k){ return STATUSES.find(s=>s.k===k) || STATUSES[0]; }
+
+/* ---------------------------- App (controller) ---------------------------- */
+const App = {
+  ui: {
+    query: '',
+    filters: { status:[], engine:[], dimension:[], category:[], genre:[], tags:[] },
+    currentFolder: {},   // itemId -> folderId currently open
+    activeTab: {},       // itemId -> 'files' | 'releases' | 'notes'
+    thumbCache: {},
+  },
+
+  async init(){
+    await Store.load();
+    window.addEventListener('hashchange', ()=>this.route());
+    this.route();
+  },
+
+  navigate(hash){ location.hash = hash; },
+
+  route(){
+    const hash = location.hash.replace(/^#\/?/,'') || 'home';
+    const parts = hash.split('/');
+    if(parts[0]==='item' && parts[1]) this.renderItemPage(parts[1]);
+    else if(parts[0]==='library') this.renderLibraryPage();
+    else this.renderHomePage();
+  },
+
+  matchesQuery(item, q){
+    if(!q) return true;
+    q = q.toLowerCase();
+    const hay = [
+      item.name, item.description, item.version, item.engine, item.dimension, item.category,
+      ...(item.genre||[]), ...(item.tags||[]), ...(item.technologies||[]), ...(item.systems||[])
+    ].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(q);
+  },
+  matchesFilters(item){
+    const f = this.ui.filters;
+    const groupOk = (vals, itemVal) => {
+      if(!vals.length) return true;
+      if(Array.isArray(itemVal)) return itemVal.some(v=>vals.includes(v));
+      return vals.includes(itemVal);
+    };
+    return groupOk(f.status, item.status) && groupOk(f.engine, item.engine) &&
+           groupOk(f.dimension, item.dimension) && groupOk(f.category, item.category) &&
+           groupOk(f.genre, item.genre) && groupOk(f.tags, item.tags);
+  },
+  filteredItems(){
+    return Store.state.items.filter(it => this.matchesQuery(it, this.ui.query) && this.matchesFilters(it))
+      .sort((a,b)=> new Date(b.updatedAt) - new Date(a.updatedAt));
+  },
+
+  setQuery(v){
+    this.ui.query = v;
+    if(!location.hash.startsWith('#/library')) this.navigate('library');
+    else this.renderLibraryPage(true);
+  },
+  toggleFilter(group, val){
+    const arr = this.ui.filters[group];
+    const idx = arr.indexOf(val);
+    if(idx>-1) arr.splice(idx,1); else arr.push(val);
+    this.renderLibraryPage(true);
+  },
+  clearFilters(){
+    this.ui.filters = { status:[], engine:[], dimension:[], category:[], genre:[], tags:[] };
+    this.ui.query = '';
+    this.renderLibraryPage(true);
+  },
+
+  /* ============================ RENDER: SHELL ============================ */
+  shell(activeKey, innerHtml){
+    const el = document.getElementById('app');
+    const navItem = (key,label,hash,dotColor) => `
+      <div class="nav-item ${activeKey===key?'active':''}" onclick="App.navigate('${hash}')">
+        ${dotColor?`<span class="nav-dot" style="background:${dotColor}"></span>`:'<span style="width:7px"></span>'}
+        ${label}
+      </div>`;
+    el.innerHTML = `
+      <aside class="sidebar">
+        <div class="brand">NoXVel<br><small>DEVELOPMENT LIBRARY</small></div>
+        <div class="nav-group">
+          ${navItem('home','Home','home')}
+          ${navItem('library','Toda a Biblioteca','library')}
+        </div>
+        <div class="nav-group">
+          <div class="nav-label">Acesso Rápido</div>
+          ${navItem('cat-project','Projects', 'library?category=Project')}
+          ${navItem('cat-system','Systems', 'library?category=System')}
+          ${navItem('cat-idea','Ideas', 'library?category=Idea')}
+          ${navItem('cat-template','Templates', 'library?category=Template')}
+          ${navItem('cat-devkit','Dev Kits', 'library?category=Dev Kit')}
+          ${navItem('cat-study','Studies', 'library?category=Study')}
+          ${navItem('cat-prototype','Prototypes', 'library?category=Prototype')}
+          ${navItem('cat-experiment','Experiments', 'library?category=Experiment')}
+          ${navItem('cat-backup','Backups', 'library?category=Backup')}
+          ${navItem('cat-archive','Archive', 'library?category=Archive')}
+        </div>
+        <div class="sidebar-foot">
+          Dados salvos na sua conta.<br>
+          <span class="link-reset" onclick="App.confirmReset()">Apagar tudo</span>
+        </div>
+      </aside>
+      <main class="main">
+        <div class="topbar">
+          <div class="search-wrap">
+            <span class="search-icon">⌕</span>
+            <input class="search-input" id="global-search" placeholder="Pesquisar por nome, tag, engine, sistema, tecnologia..." value="${Utils.esc(this.ui.query)}" oninput="App.onSearchInput(this.value)">
+          </div>
+          <div class="topbar-actions">
+            <button class="btn btn-primary" onclick="App.openNewItemModal()">+ New Item</button>
+          </div>
+        </div>
+        <div class="content">${innerHtml}</div>
+      </main>`;
+  },
+
+  onSearchInput: Utils.debounce(function(v){ App.setQuery(v); }, 220),
+
+  /* ============================ RENDER: HOME ============================ */
+  renderHomePage(){
+    const items = Store.state.items;
+    const counts = { total: items.length };
+    STATUSES.forEach(s => counts[s.k] = items.filter(i=>i.status===s.k).length);
+    const totalReleases = items.reduce((n,i)=> n + (i.releases?i.releases.length:0), 0);
+
+    const recent = [...items].sort((a,b)=>new Date(b.updatedAt)-new Date(a.updatedAt)).slice(0,6);
+
+    const html = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Sua biblioteca de desenvolvimento</h1>
+          <div class="page-sub">Tudo que você criou pode ser encontrado novamente.</div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num">${counts.total}</div><div class="stat-label">Projetos</div></div>
+        <div class="stat-card" data-k="dev"><div class="stat-num">${counts.dev}</div><div class="stat-label">In Development</div></div>
+        <div class="stat-card" data-k="completed"><div class="stat-num">${counts.completed}</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card" data-k="ideas"><div class="stat-num">${counts.ideas}</div><div class="stat-label">Ideas</div></div>
+        <div class="stat-card" data-k="canceled"><div class="stat-num">${counts.canceled}</div><div class="stat-label">Canceled</div></div>
+        <div class="stat-card" data-k="archived"><div class="stat-num">${counts.archived}</div><div class="stat-label">Archived</div></div>
+        <div class="stat-card"><div class="stat-num">${totalReleases}</div><div class="stat-label">Releases</div></div>
+      </div>
+
+      <div class="section-title">Recently Updated</div>
+      ${recent.length ? `<div class="grid-cards">${recent.map(it=>this.itemCard(it)).join('')}</div>` :
+        `<div class="empty"><b>Ainda não há nada aqui.</b>Crie seu primeiro projeto, sistema ou ideia com "+ New Item".</div>`}
+
+      <div class="section-title">Quick Access</div>
+      <div class="chip-row">
+        ${CATEGORIES.map(c=>`<div class="chip" onclick="App.navigate('library?category=${encodeURIComponent(c)}')">${c}</div>`).join('')}
+      </div>
+    `;
+    this.shell('home', html);
+  },
+
+  /* ============================ RENDER: LIBRARY ============================ */
+  renderLibraryPage(skipHashParse){
+    if(!skipHashParse){
+      const q = location.hash.split('?')[1];
+      if(q){
+        const params = new URLSearchParams(q);
+        if(params.get('category')){
+          this.ui.filters = { status:[], engine:[], dimension:[], category:[params.get('category')], genre:[], tags:[] };
+        }
+      }
+    }
+    const items = this.filteredItems();
+    const f = this.ui.filters;
+
+    const facetGroup = (title, key, values, fixed) => {
+      const opts = fixed ? fixed : Store.facetValues(key);
+      if(!opts.length) return '';
+      return `<div class="filter-group"><h4>${title}</h4>${opts.map(v=>`
+        <label class="filter-opt">
+          <input type="checkbox" ${f[key].includes(v)?'checked':''} onchange="App.toggleFilter('${key}', ${JSON.stringify(v)})">
+          ${Utils.esc(v)}
+        </label>`).join('')}</div>`;
+    };
+
+    const anyFilterActive = Object.values(f).some(a=>a.length) || this.ui.query;
+
+    const html = `
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Biblioteca</h1>
+          <div class="page-sub">${items.length} item(ns) encontrados</div>
+        </div>
+      </div>
+      <div class="layout-filters">
+        <div class="filter-panel">
+          ${anyFilterActive?`<span class="filter-clear" onclick="App.clearFilters()">Limpar todos os filtros</span>`:''}
+          ${facetGroup('Categoria','category', null, CATEGORIES)}
+          ${facetGroup('Status','status', null, STATUSES.map(s=>s.k))}
+          ${facetGroup('Engine','engine', null, ENGINES)}
+          ${facetGroup('Dimensão','dimension', null, DIMENSIONS)}
+          ${facetGroup('Gênero','genre')}
+          ${facetGroup('Tags','tags')}
+        </div>
+        <div>
+          ${items.length ? `<div class="grid-cards">${items.map(it=>this.itemCard(it)).join('')}</div>` :
+            `<div class="empty"><b>Nada encontrado.</b>Tente ajustar a busca ou os filtros.</div>`}
+        </div>
+      </div>
+    `;
+    this.shell('library', html);
+  },
+
+  itemCard(it){
+    const st = statusMeta(it.status);
+    const thumbId = 'thumb-'+it.id+'-'+Math.random().toString(36).slice(2,6);
+    if(it.hasThumbnail) this.hydrateThumb(it.id, thumbId);
+    return `
+      <div class="card" onclick="App.navigate('item/${it.id}')">
+        <div class="card-thumb" ${it.hasThumbnail?`id="${thumbId}"`:''}>
+          <div class="status-bar" style="background:${st.dot}"></div>
+          ${it.hasThumbnail?'':Utils.esc(it.category)}
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <div class="card-title">${Utils.esc(it.name)||'(sem nome)'}</div>
+            <span class="badge" data-status="${it.status}"><span class="nav-dot" style="background:${st.dot}"></span>${st.label}</span>
+          </div>
+          <div class="card-desc">${Utils.esc(it.description)||'Sem descrição.'}</div>
+          <div class="meta-row">
+            <span>${Utils.esc(it.engine)}</span><span>${Utils.esc(it.dimension)}</span>
+            ${it.genre&&it.genre[0]?`<span>${Utils.esc(it.genre[0])}</span>`:''}
+          </div>
+          ${it.tags&&it.tags.length?`<div class="tag-row">${it.tags.slice(0,4).map(t=>`<span class="tag">#${Utils.esc(t)}</span>`).join('')}</div>`:''}
+          <div class="card-foot">
+            <span>Atualizado ${Utils.timeAgo(it.updatedAt)}</span>
+            <span>${(it.releases||[]).length} release(s)</span>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  async hydrateThumb(itemId, elId){
+    try{
+      const blob = await FileDB.get('thumb:'+itemId);
+      if(!blob) return;
+      const url = URL.createObjectURL(blob);
+      const el = document.getElementById(elId);
+      if(el) el.innerHTML = `<img src="${url}">`;
+    }catch(e){}
+  },
+
+  /* ============================ RENDER: ITEM PAGE ============================ */
+  renderItemPage(id){
+    const it = Store.getItem(id);
+    if(!it){ this.navigate('home'); return; }
+    const st = statusMeta(it.status);
+    const tab = this.ui.activeTab[id] || 'files';
+    const thumbId = 'thumb-lg-'+it.id;
+    if(it.hasThumbnail) this.hydrateThumb(it.id, thumbId);
+
+    const html = `
+      <div style="margin-bottom:14px;"><span class="link-reset" onclick="App.navigate('library')">← Voltar para a biblioteca</span></div>
+      <div class="item-head">
+        <div class="item-thumb-lg" ${it.hasThumbnail?`id="${thumbId}"`:''}>${it.hasThumbnail?'':Utils.esc(it.category)}</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <h1 class="item-title">${Utils.esc(it.name)}</h1>
+            <span class="badge" data-status="${it.status}"><span class="nav-dot" style="background:${st.dot}"></span>${st.label}</span>
+          </div>
+          <div class="item-meta-line">
+            <span>${Utils.esc(it.category)}</span><span class="dot-sep"></span>
+            <span>${Utils.esc(it.engine)}</span><span class="dot-sep"></span>
+            <span>${Utils.esc(it.dimension)}</span>
+            ${it.genre&&it.genre.length?`<span class="dot-sep"></span><span>${it.genre.map(Utils.esc).join(', ')}</span>`:''}
+            ${it.version?`<span class="dot-sep"></span><span class="mono">v${Utils.esc(it.version)}</span>`:''}
+          </div>
+          <div class="item-desc">${Utils.esc(it.description)||'Sem descrição.'}</div>
+          ${it.tags&&it.tags.length?`<div class="tag-row">${it.tags.map(t=>`<span class="tag">#${Utils.esc(t)}</span>`).join('')}</div>`:''}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-sm" onclick="App.openEditItemModal('${it.id}')">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="App.confirmDeleteItem('${it.id}')">Excluir</button>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab ${tab==='files'?'active':''}" onclick="App.setTab('${it.id}','files')">Files</div>
+        <div class="tab ${tab==='releases'?'active':''}" onclick="App.setTab('${it.id}','releases')">Releases (${(it.releases||[]).length})</div>
+        <div class="tab ${tab==='notes'?'active':''}" onclick="App.setTab('${it.id}','notes')">Notes</div>
+      </div>
+
+      <div id="tab-content">${tab==='files'?this.renderFilesTab(it):tab==='releases'?this.renderReleasesTab(it):this.renderNotesTab(it)}</div>
+    `;
+    this.shell(null, html);
+  },
+
+  setTab(itemId, tab){ this.ui.activeTab[itemId] = tab; this.renderItemPage(itemId); },
+
+  renderNotesTab(it){
+    return `
+      <div class="form-row" style="max-width:700px;">
+        <label>Notas</label>
+        <textarea id="notes-area" style="min-height:180px;" placeholder="Anotações livres sobre este item...">${Utils.esc(it.notes)}</textarea>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="App.saveNotes('${it.id}')">Salvar notas</button>
+    `;
+  },
+  saveNotes(itemId){
+    const v = document.getElementById('notes-area').value;
+    Store.updateItem(itemId, {notes: v});
+    Utils.toast('Notas salvas.');
+  },
+
+  renderFilesTab(it){
+    const currentFolderId = this.ui.currentFolder[it.id] || null;
+    const path = currentFolderId ? Store.folderPath(currentFolderId) : [];
+    const folders = Store.getFolders(it.id, currentFolderId);
+    const files = Store.getFiles(it.id, currentFolderId);
+
+    const crumbs = `<div class="breadcrumb">
+        <span onclick="App.openFolder('${it.id}', null)">${Utils.esc(it.name)}</span>
+        ${path.map(p=>`<span class="sep">/</span><span onclick="App.openFolder('${it.id}','${p.id}')">${Utils.esc(p.name)}</span>`).join('')}
+      </div>`;
+
+    const rows = [
+      ...folders.map(f=>`
+        <tr>
+          <td><div class="row-name" onclick="App.openFolder('${it.id}','${f.id}')"><span class="row-ic">📁</span>${Utils.esc(f.name)}</div></td>
+          <td class="mono">pasta</td><td class="mono">—</td><td class="mono">${Utils.formatDate(f.createdAt)}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-icon btn-sm" title="Renomear" onclick="event.stopPropagation();App.promptRenameFolder('${f.id}')">✎</button>
+            <button class="btn btn-icon btn-sm btn-danger" title="Excluir" onclick="event.stopPropagation();App.confirmDeleteFolder('${f.id}','${it.id}')">🗑</button>
+          </div></td>
+        </tr>`),
+      ...files.map(fl=>`
+        <tr>
+          <td><div class="row-name"><span class="row-ic">📄</span>${Utils.esc(fl.name)}</div></td>
+          <td class="mono">${Utils.esc((fl.name.split('.').pop()||'').toUpperCase())}</td>
+          <td class="mono">${Utils.formatBytes(fl.size)}</td>
+          <td class="mono">${Utils.formatDate(fl.uploadedAt)}</td>
+          <td><div class="row-actions">
+            <button class="btn btn-icon btn-sm" title="Download" onclick="App.downloadFile('${fl.id}')">⬇</button>
+            <button class="btn btn-icon btn-sm" title="Renomear" onclick="App.promptRenameFile('${fl.id}','${it.id}')">✎</button>
+            <button class="btn btn-icon btn-sm btn-danger" title="Excluir" onclick="App.confirmDeleteFile('${fl.id}','${it.id}')">🗑</button>
+          </div></td>
+        </tr>`)
+    ].join('');
+
+    return `
+      ${crumbs}
+      <div class="file-toolbar">
+        <button class="btn btn-sm" onclick="App.promptNewFolder('${it.id}')">+ New Folder</button>
+        <button class="btn btn-sm btn-primary" onclick="document.getElementById('file-input-${it.id}').click()">Upload Files</button>
+        <input type="file" id="file-input-${it.id}" multiple style="display:none" onchange="App.uploadFiles('${it.id}', this.files)">
+      </div>
+      <div id="upload-progress-${it.id}"></div>
+      ${rows ? `<table class="table"><thead><tr><th>Nome</th><th>Tipo</th><th>Tamanho</th><th>Data</th><th></th></tr></thead><tbody>${rows}</tbody></table>`
+             : `<div class="empty"><b>Pasta vazia.</b>Crie uma subpasta ou envie arquivos.</div>`}
+    `;
+  },
+
+  openFolder(itemId, folderId){ this.ui.currentFolder[itemId] = folderId; this.renderItemPage(itemId); },
+
+  promptNewFolder(itemId){
+    this.openModal(`
+      <h3>Nova pasta</h3>
+      <div class="form-row"><label>Nome da pasta</label><input type="text" id="new-folder-name" autofocus></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="App.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="App.createFolder('${itemId}')">Criar</button>
+      </div>`);
+  },
+  createFolder(itemId){
+    const name = document.getElementById('new-folder-name').value.trim();
+    if(!name) return;
+    Store.addFolder(itemId, this.ui.currentFolder[itemId]||null, name);
+    this.closeModal();
+    this.renderItemPage(itemId);
+  },
+  promptRenameFolder(folderId){
+    const f = Store.getFolder(folderId);
+    this.openModal(`
+      <h3>Renomear pasta</h3>
+      <div class="form-row"><input type="text" id="rename-folder-input" value="${Utils.esc(f.name)}" autofocus></div>
+      <div class="modal-actions"><button class="btn" onclick="App.closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="App.doRenameFolder('${folderId}','${f.itemId}')">Salvar</button></div>`);
+  },
+  doRenameFolder(folderId, itemId){
+    const v = document.getElementById('rename-folder-input').value.trim();
+    if(v) Store.renameFolder(folderId, v);
+    this.closeModal(); this.renderItemPage(itemId);
+  },
+  confirmDeleteFolder(folderId, itemId){
+    this.openModal(`
+      <h3>Excluir pasta?</h3>
+      <p style="color:var(--text-dim);font-size:13px;">Isso removerá a pasta, subpastas e todos os arquivos dentro dela. Essa ação não pode ser desfeita.</p>
+      <div class="modal-actions"><button class="btn" onclick="App.closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="App.doDeleteFolder('${folderId}','${itemId}')">Excluir</button></div>`);
+  },
+  async doDeleteFolder(folderId, itemId){
+    await Store.deleteFolder(folderId);
+    this.closeModal(); this.renderItemPage(itemId);
+  },
+
+  async uploadFiles(itemId, fileList){
+    const progressEl = document.getElementById('upload-progress-'+itemId);
+    const folderId = this.ui.currentFolder[itemId] || null;
+    const files = Array.from(fileList);
+    for(let i=0;i<files.length;i++){
+      const f = files[i];
+      if(progressEl) progressEl.innerHTML = `<div class="upload-progress">Enviando ${i+1}/${files.length}: ${Utils.esc(f.name)}...</div>`;
+      const id = Utils.uid('file');
+      try{
+        await FileDB.put(id, f);
+        Store.addFileMeta({ id, itemId, folderId, name:f.name, size:f.size, uploadedAt: new Date().toISOString() });
+      }catch(e){ Utils.toast('Erro ao enviar '+f.name); }
+    }
+    if(progressEl) progressEl.innerHTML = '';
+    Utils.toast(files.length+' arquivo(s) enviado(s).');
+    this.renderItemPage(itemId);
+  },
+
+  async downloadFile(fileId){
+    const meta = Store.getFile(fileId);
+    if(!meta) return;
+    const blob = await FileDB.get(fileId);
+    if(!blob){ Utils.toast('Arquivo não encontrado no armazenamento local.'); return; }
+    Utils.download(blob, meta.name);
+  },
+  promptRenameFile(fileId, itemId){
+    const f = Store.getFile(fileId);
+    this.openModal(`
+      <h3>Renomear arquivo</h3>
+      <div class="form-row"><input type="text" id="rename-file-input" value="${Utils.esc(f.name)}" autofocus></div>
+      <div class="modal-actions"><button class="btn" onclick="App.closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="App.doRenameFile('${fileId}','${itemId}')">Salvar</button></div>`);
+  },
+  doRenameFile(fileId, itemId){
+    const v = document.getElementById('rename-file-input').value.trim();
+    if(v) Store.renameFile(fileId, v);
+    this.closeModal(); this.renderItemPage(itemId);
+  },
+  confirmDeleteFile(fileId, itemId){
+    this.openModal(`
+      <h3>Excluir arquivo?</h3>
+      <p style="color:var(--text-dim);font-size:13px;">Essa ação não pode ser desfeita.</p>
+      <div class="modal-actions"><button class="btn" onclick="App.closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="App.doDeleteFile('${fileId}','${itemId}')">Excluir</button></div>`);
+  },
+  async doDeleteFile(fileId, itemId){
+    await Store.deleteFile(fileId);
+    this.closeModal(); this.renderItemPage(itemId);
+  },
+
+  /* ---------------- Releases ---------------- */
+  renderReleasesTab(it){
+    const releases = it.releases || [];
+    return `
+      <button class="btn btn-primary btn-sm" style="margin-bottom:16px;" onclick="App.openNewReleaseModal('${it.id}')">+ New Release</button>
+      ${releases.length ? releases.map(r=>`
+        <div class="release-item" onclick="App.viewRelease('${it.id}','${r.id}')">
+          <div class="release-top">
+            <span class="release-ver">v${Utils.esc(r.version)}</span>
+            <span class="release-date">${Utils.formatDate(r.date)}</span>
+          </div>
+          <div class="release-name">${Utils.esc(r.name)}</div>
+          <div class="release-files-count">${(r.fileIds||[]).length} arquivo(s)</div>
+        </div>`).join('') : `<div class="empty"><b>Nenhuma release ainda.</b>Crie uma release para marcar uma versão dos seus arquivos.</div>`}
+    `;
+  },
+
+  openNewReleaseModal(itemId){
+    const files = Store.getAllFiles(itemId);
+    const rows = files.map(f=>{
+      const path = f.folderId ? Store.folderPath(f.folderId).map(p=>p.name).join('/')+'/' : '';
+      return `<label class="file-pick-row"><input type="checkbox" value="${f.id}" class="release-file-check"> <span class="mono">${Utils.esc(path)}</span>${Utils.esc(f.name)} <span style="margin-left:auto;color:var(--text-faint);">${Utils.formatBytes(f.size)}</span></label>`;
+    }).join('') || `<div style="padding:14px;color:var(--text-faint);font-size:12.5px;">Nenhum arquivo neste item ainda. Faça upload antes de criar uma release, ou crie a release mesmo assim.</div>`;
+
+    this.openModal(`
+      <h3>Nova Release</h3>
+      <div class="form-2col">
+        <div class="form-row"><label>Version</label><input type="text" id="rel-version" placeholder="1.0.0"></div>
+        <div class="form-row"><label>Date</label><input type="date" id="rel-date" value="${new Date().toISOString().slice(0,10)}"></div>
+      </div>
+      <div class="form-row"><label>Release Name</label><input type="text" id="rel-name" placeholder="First Stable Version"></div>
+      <div class="form-row"><label>Description</label><textarea id="rel-desc" placeholder="O que mudou nesta versão..."></textarea></div>
+      <div class="form-row"><label>Arquivos associados</label><div class="file-pick-list">${rows}</div></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="App.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="App.saveRelease('${itemId}')">Criar Release</button>
+      </div>`);
+  },
+  saveRelease(itemId){
+    const version = document.getElementById('rel-version').value.trim();
+    if(!version){ Utils.toast('Informe a versão.'); return; }
+    const name = document.getElementById('rel-name').value.trim();
+    const date = document.getElementById('rel-date').value || new Date().toISOString().slice(0,10);
+    const description = document.getElementById('rel-desc').value.trim();
+    const fileIds = Array.from(document.querySelectorAll('.release-file-check:checked')).map(c=>c.value);
+    Store.addRelease(itemId, { version, name, date, description, fileIds });
+    this.closeModal();
+    this.ui.activeTab[itemId] = 'releases';
+    this.renderItemPage(itemId);
+    Utils.toast('Release criada.');
+  },
+
+  viewRelease(itemId, relId){
+    const it = Store.getItem(itemId);
+    const r = Store.getRelease(itemId, relId);
+    if(!r) return;
+    const files = (r.fileIds||[]).map(id=>Store.getFile(id)).filter(Boolean);
+    const totalSize = files.reduce((n,f)=>n+(f.size||0),0);
+    this.openModal(`
+      <h3>${Utils.esc(it.name)} — v${Utils.esc(r.version)}</h3>
+      <div style="color:var(--text-dim);font-size:12.5px;margin-bottom:10px;">${Utils.formatDate(r.date)} · ${Utils.formatBytes(totalSize)}</div>
+      ${r.name?`<div style="font-weight:600;margin-bottom:8px;">${Utils.esc(r.name)}</div>`:''}
+      ${r.description?`<p style="color:var(--text-dim);font-size:13px;white-space:pre-wrap;">${Utils.esc(r.description)}</p>`:''}
+      <div class="file-pick-list" style="margin-top:10px;">
+        ${files.length? files.map(f=>`<div class="file-pick-row"><span>📄 ${Utils.esc(f.name)}</span><span style="margin-left:auto;color:var(--text-faint);">${Utils.formatBytes(f.size)}</span></div>`).join('')
+          : `<div style="padding:14px;color:var(--text-faint);font-size:12.5px;">Sem arquivos associados a esta release.</div>`}
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="App.closeModal()">Fechar</button>
+        ${files.length?`<button class="btn btn-primary" onclick="App.downloadRelease('${itemId}','${relId}')">Download Release</button>`:''}
+      </div>`);
+  },
+
+  async downloadRelease(itemId, relId){
+    const it = Store.getItem(itemId);
+    const r = Store.getRelease(itemId, relId);
+    const files = (r.fileIds||[]).map(id=>Store.getFile(id)).filter(Boolean);
+    if(!files.length) return;
+    if(files.length===1){
+      const blob = await FileDB.get(files[0].id);
+      if(blob) Utils.download(blob, files[0].name);
+      return;
+    }
+    Utils.toast('Compactando release...');
+    const zip = new JSZip();
+    for(const f of files){
+      const blob = await FileDB.get(f.id);
+      if(blob) zip.file(f.name, blob);
+    }
+    const content = await zip.generateAsync({type:'blob'});
+    Utils.download(content, `${it.name.replace(/[^a-z0-9]+/gi,'_')}_v${r.version}.zip`);
+  },
+
+  /* ---------------- New / Edit item modal ---------------- */
+  openNewItemModal(){
+    this.openModal(this.itemFormHtml(null), true);
+  },
+  openEditItemModal(id){
+    this.openModal(this.itemFormHtml(Store.getItem(id)), true);
+  },
+
+  itemFormHtml(it){
+    const isEdit = !!it;
+    it = it || { category:'Project', status:'dev', engine:'Unity', dimension:'2D', genre:[], tags:[], technologies:[], version:'' };
+    const opts = (arr,val)=>arr.map(v=>`<option value="${v}" ${v===val?'selected':''}>${v}</option>`).join('');
+    return `
+      <h3>${isEdit?'Editar item':'+ New Item'}</h3>
+      <div class="form-row"><label>Nome</label><input type="text" id="f-name" value="${Utils.esc(it.name||'')}" placeholder="NEEN Remake" autofocus></div>
+      <div class="form-row"><label>Descrição</label><textarea id="f-desc" placeholder="Do que se trata este item...">${Utils.esc(it.description||'')}</textarea></div>
+      <div class="form-2col">
+        <div class="form-row"><label>Categoria</label><select id="f-category">${opts(CATEGORIES, it.category)}</select></div>
+        <div class="form-row"><label>Status</label><select id="f-status">${STATUSES.map(s=>`<option value="${s.k}" ${s.k===it.status?'selected':''}>${s.label}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row"><label>Engine</label><select id="f-engine">${opts(ENGINES, it.engine)}</select></div>
+        <div class="form-row"><label>Dimensão</label><select id="f-dimension">${opts(DIMENSIONS, it.dimension)}</select></div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row"><label>Versão atual</label><input type="text" id="f-version" value="${Utils.esc(it.version||'')}" placeholder="0.1.0"></div>
+        <div class="form-row"><label>Thumbnail (opcional)</label><input type="file" id="f-thumb" accept="image/*"></div>
+      </div>
+      <div class="form-row"><label>Gênero(s) — livre, pressione Enter</label>${this.tagInputHtml('f-genre', it.genre||[])}</div>
+      <div class="form-row"><label>Tags — livre, pressione Enter</label>${this.tagInputHtml('f-tags', it.tags||[])}</div>
+      <div class="form-row"><label>Tecnologias</label>${this.tagInputHtml('f-tech', it.technologies||[])}</div>
+      <div class="form-row"><label>Sistemas reutilizados</label>${this.tagInputHtml('f-systems', it.systems||[])}</div>
+      <div class="modal-actions">
+        <button class="btn" onclick="App.closeModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="App.saveItemForm(${isEdit?`'${it.id}'`:'null'})">${isEdit?'Salvar':'Criar'}</button>
+      </div>
+    `;
+  },
+
+  tagInputHtml(id, values){
+    return `<div class="tag-input-box" id="${id}-box" data-values='${JSON.stringify(values)}'>
+      ${values.map(v=>`<span class="tag">${Utils.esc(v)}<span class="tag-x" onclick="App.removeTagChip('${id}', this)">×</span></span>`).join('')}
+      <input type="text" placeholder="adicionar..." onkeydown="App.tagKeydown(event,'${id}')">
+    </div>`;
+  },
+  tagKeydown(e, id){
+    if(e.key==='Enter' && e.target.value.trim()){
+      e.preventDefault();
+      const box = document.getElementById(id+'-box');
+      const span = document.createElement('span');
+      span.className='tag';
+      span.innerHTML = Utils.esc(e.target.value.trim())+`<span class="tag-x" onclick="App.removeTagChip('${id}', this)">×</span>`;
+      box.insertBefore(span, e.target);
+      e.target.value='';
+    }
+  },
+  removeTagChip(id, el){ el.parentElement.remove(); },
+  readTagBox(id){
+    const box = document.getElementById(id+'-box');
+    return Array.from(box.querySelectorAll('.tag')).map(t=>t.firstChild.textContent);
+  },
+
+  async saveItemForm(id){
+    const name = document.getElementById('f-name').value.trim();
+    if(!name){ Utils.toast('Dê um nome ao item.'); return; }
+    const data = {
+      name,
+      description: document.getElementById('f-desc').value.trim(),
+      category: document.getElementById('f-category').value,
+      status: document.getElementById('f-status').value,
+      engine: document.getElementById('f-engine').value,
+      dimension: document.getElementById('f-dimension').value,
+      version: document.getElementById('f-version').value.trim(),
+      genre: this.readTagBox('f-genre'),
+      tags: this.readTagBox('f-tags'),
+      technologies: this.readTagBox('f-tech'),
+      systems: this.readTagBox('f-systems'),
+    };
+    const thumbInput = document.getElementById('f-thumb');
+    let itemId = id;
+    if(id){
+      Store.updateItem(id, data);
+    }else{
+      const created = Store.addItem(data);
+      itemId = created.id;
+    }
+    if(thumbInput && thumbInput.files[0]){
+      await FileDB.put('thumb:'+itemId, thumbInput.files[0]);
+      Store.updateItem(itemId, {hasThumbnail:true});
+    }
+    this.closeModal();
+    Utils.toast(id?'Item atualizado.':'Item criado.');
+    this.navigate('item/'+itemId);
+  },
+
+  confirmDeleteItem(id){
+    this.openModal(`
+      <h3>Excluir este item?</h3>
+      <p style="color:var(--text-dim);font-size:13px;">Todos os arquivos, pastas e releases associados serão apagados permanentemente.</p>
+      <div class="modal-actions"><button class="btn" onclick="App.closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="App.doDeleteItem('${id}')">Excluir permanentemente</button></div>`);
+  },
+  async doDeleteItem(id){
+    await Store.deleteItem(id);
+    this.closeModal();
+    Utils.toast('Item excluído.');
+    this.navigate('library');
+  },
+
+  confirmReset(){
+    this.openModal(`
+      <h3>Apagar toda a biblioteca?</h3>
+      <p style="color:var(--text-dim);font-size:13px;">Isso remove todos os projetos, sistemas, ideias, pastas, arquivos e releases. Não pode ser desfeito.</p>
+      <div class="modal-actions"><button class="btn" onclick="App.closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="App.doReset()">Apagar tudo</button></div>`);
+  },
+  async doReset(){
+    await Store.resetAll();
+    this.closeModal();
+    this.navigate('home');
+    Utils.toast('Biblioteca zerada.');
+  },
+
+  /* ---------------- modal helpers ---------------- */
+  openModal(innerHtml){
+    document.getElementById('modal-root').innerHTML = `
+      <div class="modal-overlay" onmousedown="if(event.target===this) App.closeModal()">
+        <div class="modal">${innerHtml}</div>
+      </div>`;
+  },
+  closeModal(){ document.getElementById('modal-root').innerHTML=''; }
+};
+
+App.init();
+</script>
+</body>
+</html>
