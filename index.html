@@ -439,20 +439,57 @@ const GH = {
     return { sha: json.sha, contentBase64: json.content };
   },
   async verifyAdminToken(token){
-    const res = await fetch('https://api.github.com/user', {
-      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
-    });
-    if(!res.ok) throw new Error('Token inválido ou sem autorização.');
+    if(!token) throw new Error('Informe o token do GitHub.');
+
+    let res;
+    try {
+      res = await fetch('https://api.github.com/user', {
+        method:'GET',
+        headers:{
+          'Accept':'application/vnd.github+json',
+          'Authorization':'Bearer '+token,
+          'X-GitHub-Api-Version':'2022-11-28'
+        },
+        cache:'no-store'
+      });
+    } catch(err) {
+      throw new Error('Não foi possível conectar à API do GitHub. Verifique sua conexão, bloqueador/extensão do navegador ou tente recarregar a página.');
+    }
+
+    if(res.status === 401) throw new Error('Token inválido, expirado ou revogado.');
+    if(!res.ok) throw new Error('O GitHub recusou a autenticação (HTTP '+res.status+').');
+
     const user = await res.json();
+
     if(!user.login || user.login.toLowerCase() !== PUBLIC_GH.adminUser.toLowerCase()){
       throw new Error('Esta conta GitHub não é o administrador da biblioteca.');
     }
-    const repoRes = await fetch(this.apiUrl(''), {
-      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
-    });
-    if(!repoRes.ok) throw new Error('O token não consegue acessar o repositório configurado.');
+
+    let repoRes;
+    try {
+      repoRes = await fetch(this.apiUrl(''), {
+        method:'GET',
+        headers:{
+          'Accept':'application/vnd.github+json',
+          'Authorization':'Bearer '+token,
+          'X-GitHub-Api-Version':'2022-11-28'
+        },
+        cache:'no-store'
+      });
+    } catch(err) {
+      throw new Error('A conta foi autenticada, mas não foi possível verificar o repositório no GitHub.');
+    }
+
+    if(repoRes.status === 401 || repoRes.status === 403){
+      throw new Error('O token não possui acesso ao repositório configurado.');
+    }
+    if(!repoRes.ok) throw new Error('Erro ao verificar o repositório (HTTP '+repoRes.status+').');
+
     const repo = await repoRes.json();
-    if((repo.name||'').toLowerCase() !== PUBLIC_GH.repo.toLowerCase()) throw new Error('Repositório incorreto.');
+    if((repo.name||'').toLowerCase() !== PUBLIC_GH.repo.toLowerCase()){
+      throw new Error('Repositório incorreto.');
+    }
+
     return user;
   }
 };
